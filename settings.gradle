@@ -1,0 +1,3 @@
+rootProject.name = 'game'
+include 'authorization-service'
+
