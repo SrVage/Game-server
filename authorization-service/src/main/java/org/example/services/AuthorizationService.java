@@ -7,4 +7,6 @@ public interface AuthorizationService {
     LoginResponseDto login(LoginRequestDto loginRequestDto);
 
     LoginResponseDto register(LoginRequestDto loginRequestDto);
+
+    boolean checkToken(String token);
 }

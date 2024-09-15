@@ -2,8 +2,10 @@ services:
   postgres:
     image: postgres:15.0
     domainname: postgres
+    networks:
+      - game-server-network
     ports:
-      - "5433:5432"
+      - "5432:5432"
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
@@ -12,3 +14,30 @@ services:
       interval: 5s
       timeout: 1s
       retries: 3
+
+  core-gameplay-service:
+    build:
+      context: ../../core-gameplay-service
+      dockerfile: Dockerfile
+    networks:
+        - game-server-network
+    ports:
+      - "8182:8182"
+
+  authorization-service:
+    build:
+      context: ../../authorization-service
+      dockerfile: Dockerfile
+    networks:
+        - game-server-network
+    ports:
+      - "8181:8181"
+    environment:
+      CORE_GAMEPLAY_SERVICE_URL: http://core-gameplay-service
+      CORE_GAMEPLAY_SERVICE_PORT: 8182
+    depends_on:
+      - core-gameplay-service
+      - postgres
+
+networks:
+    game-server-network:

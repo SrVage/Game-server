@@ -6,10 +6,7 @@ import org.example.dto.EnterRoomResponseDto;
 import org.example.enums.ResponseCode;
 import org.example.services.GameRoomService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -31,5 +28,10 @@ public class GameRoomController {
         } else{
             return ResponseEntity.ok(new EnterRoomResponseDto(ResponseCode.ROOM_NOT_FOUND));
         }
+    }
+
+    @GetMapping()
+    public ResponseEntity check() {
+        return ResponseEntity.ok().build();
     }
 }
