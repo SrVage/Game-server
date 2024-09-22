@@ -1,4 +1,5 @@
 rootProject.name = 'game'
 include 'authorization-service'
 include 'core-gameplay-service'
+include 'web-socket-service'
 

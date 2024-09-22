@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.core5.http.ParseException;
+import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.example.dtos.GameServerUrlResponseDto;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -28,12 +30,15 @@ public class IntegrationServiceImpl implements IntegrationService{
         GameServerUrlResponseDto gameServerUrlResponseDto = new GameServerUrlResponseDto();
         HttpGet request = new HttpGet(coreGameplayServiceUrl+":"+coreGameplayServicePort+api);
         try (CloseableHttpResponse response = restClient.execute(request)) {
-            gameServerUrlResponseDto.setUrl(coreGameplayServicePort + api);
+            String responseBody = EntityUtils.toString(response.getEntity());
+            logger.warning(responseBody);
+            gameServerUrlResponseDto.setUrl(responseBody+":"+coreGameplayServicePort + api);
             gameServerUrlResponseDto.setAvailable(response.getCode() == 200);
-        } catch (IOException e) {
+        } catch (IOException | ParseException e) {
             e.printStackTrace();
             gameServerUrlResponseDto.setAvailable(false);
         }
+        logger.warning(gameServerUrlResponseDto.getUrl());
         return gameServerUrlResponseDto;
     }
 }
