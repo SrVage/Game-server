@@ -1,13 +1,15 @@
 package org.example.models.events;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import org.example.models.Position;
+import lombok.*;
 
-@RequiredArgsConstructor
+@NoArgsConstructor
+@AllArgsConstructor
 @Getter
+@Setter
+@ToString
 public abstract class GameEvent {
-    private final String playerId;
-    private final Position position;
-    private final float rotateAngle;
+    private String playerId;
+    private float positionX;
+    private float positionY;
+    private float rotateAngle;
 }

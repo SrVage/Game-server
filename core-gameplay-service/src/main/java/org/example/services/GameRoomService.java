@@ -13,4 +13,6 @@ public interface GameRoomService {
     Room getFreeRoom();
 
     void removePlayer(WebSocketSession session);
+
+    void addEvent(String roomId, String message, WebSocketSession session);
 }

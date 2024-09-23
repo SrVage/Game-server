@@ -10,7 +10,8 @@ import org.springframework.web.socket.WebSocketSession;
 @Setter
 public class Player {
     private final String id;
-    private Position position;
+    private float positionX;
+    private float positionY;
     private float rotation;
     private final WebSocketSession session;
 }

@@ -1,10 +1,12 @@
 package org.example.services;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.example.models.Player;
 import org.example.models.Room;
 import org.example.models.RoomState;
+import org.example.models.events.MoveEvent;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.WebSocketSession;
 
@@ -40,6 +42,7 @@ public class GameRoomServiceImpl implements GameRoomService {
         if(room == null){
             return false;
         }
+        logger.info("Adding player to room " + roomId + " " + message);
         var player = new Player(message, session);
         room.addPlayer(player);
         if (room.getPlayersCount() == 2){
@@ -67,9 +70,25 @@ public class GameRoomServiceImpl implements GameRoomService {
         rooms.values().forEach(room -> room.removePlayer(session));
     }
 
+    @Override
+    public void addEvent(String roomId, String message, WebSocketSession session) {
+        Room room = rooms.get(roomId);
+        if (room == null){
+            return;
+        }
+        try {
+            MoveEvent moveEvent = jsonMapper.readValue(message, MoveEvent.class);
+            room.addEvent(moveEvent, session);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private void runRoom(Room room) {
         while (room.getState() != RoomState.CLOSED){
             room.processEvent();
         }
+        logger.info("Room " + room.getId() + " closed");
+        rooms.remove(room.getId());
     }
 }
