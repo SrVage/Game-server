@@ -6,7 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.models.Player;
 import org.example.models.Room;
 import org.example.models.RoomState;
-import org.example.models.events.MoveEvent;
+import org.example.models.events.GameEvent;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.WebSocketSession;
 
@@ -77,8 +77,10 @@ public class GameRoomServiceImpl implements GameRoomService {
             return;
         }
         try {
-            MoveEvent moveEvent = jsonMapper.readValue(message, MoveEvent.class);
-            room.addEvent(moveEvent, session);
+            GameEvent gameEvent = jsonMapper.readValue(message, GameEvent.class);
+            if (gameEvent != null) {
+                room.addEvent(gameEvent, session);
+            }
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }

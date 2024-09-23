@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import org.example.models.events.EventSender;
 import org.example.models.events.GameEvent;
-import org.example.models.events.MoveEvent;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
@@ -79,12 +78,10 @@ public class Room {
     }
 
     private void handleEventOther(GameEvent event, WebSocketSession session) {
-        if (event.getClass().equals(MoveEvent.class)) {
-            try {
-                broadcast("move", jsonMapper.writeValueAsString(event), session);
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
+        try{
+            broadcast("game_command", jsonMapper.writeValueAsString(event), session);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -93,9 +90,7 @@ public class Room {
     }
 
     private void handleEvent(GameEvent event) {
-        if (event.getClass().equals(MoveEvent.class)) {
-            broadcast("move", event.toString());
-        }
+
     }
 
     private void broadcast(String comand, String message, WebSocketSession session) {

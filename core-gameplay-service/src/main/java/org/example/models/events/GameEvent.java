@@ -7,8 +7,9 @@ import lombok.*;
 @Getter
 @Setter
 @ToString
-public abstract class GameEvent {
+public class GameEvent {
     private String playerId;
+    private String cmd;
     private float positionX;
     private float positionY;
     private float rotateAngle;

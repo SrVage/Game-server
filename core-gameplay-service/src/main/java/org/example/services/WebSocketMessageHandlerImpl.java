@@ -24,7 +24,7 @@ public class WebSocketMessageHandlerImpl implements WebSocketMessageHandler{
                 case "room":
                     gameRoomService.joinRoom(wsMessage.getRoomId(), wsMessage.getMessage(), session);
                     break;
-                case "move":
+                case "game_command":
                     gameRoomService.addEvent(wsMessage.getRoomId(), wsMessage.getMessage(), session);
                     break;
             }
