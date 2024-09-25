@@ -39,8 +39,8 @@ public class Room {
         }
     }
 
-    public boolean startGame(){
-        if (players.size() < 2){
+    public boolean startGame() {
+        if (players.size() < 2) {
             return false;
         }
         state = RoomState.IN_PROGRESS;
@@ -48,7 +48,7 @@ public class Room {
         return true;
     }
 
-    public void completeGame(){
+    public void completeGame() {
         state = RoomState.CLOSED;
     }
 
@@ -68,17 +68,30 @@ public class Room {
         EventSender event;
 
         while ((event = eventQueue.poll()) != null) {
-            if (event.isAll())
-            {
-                handleEvent(event.getEvent());
-            } else{
-                handleEventOther(event.getEvent(), event.getSession());
+            if (event.getEvent().getCmd().equals("move")) {
+                processMoveEvent(event);
+            } else {
+                if (event.isAll()) {
+                    handleEvent(event.getEvent());
+                } else {
+                    handleEventOther(event.getEvent(), event.getSession());
+                }
             }
         }
     }
 
+    private void processMoveEvent(EventSender event) {
+        var player = getPlayerBySession(event.getSession());
+        if (player.updatePosition(event.getEvent().getPositionX(), event.getEvent().getPositionY(), event.getEvent().getRotateAngle())) {
+            handleEventOther(event.getEvent(), event.getSession());
+        } else {
+            var newEvent = new GameEvent(player.getId(), "move", player.getPositionX(), player.getPositionY(), player.getRotation());
+            handleEvent(newEvent);
+        }
+    }
+
     private void handleEventOther(GameEvent event, WebSocketSession session) {
-        try{
+        try {
             broadcast("game_command", jsonMapper.writeValueAsString(event), session);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
@@ -90,11 +103,15 @@ public class Room {
     }
 
     private void handleEvent(GameEvent event) {
-
+        try {
+            broadcast("game_command", jsonMapper.writeValueAsString(event));
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    private void broadcast(String comand, String message, WebSocketSession session) {
-        WebSocketMessage webSocketMessage = new WebSocketMessage(comand, id, message);
+    private void broadcast(String command, String message, WebSocketSession session) {
+        WebSocketMessage webSocketMessage = new WebSocketMessage(command, id, message);
         try {
             String jsonMessage = jsonMapper.writeValueAsString(webSocketMessage);
             for (var player : players) {
@@ -108,8 +125,8 @@ public class Room {
         }
     }
 
-    private void broadcast(String comand, String message) {
-        WebSocketMessage webSocketMessage = new WebSocketMessage(comand, id, message);
+    private void broadcast(String command, String message) {
+        WebSocketMessage webSocketMessage = new WebSocketMessage(command, id, message);
         try {
             String jsonMessage = jsonMapper.writeValueAsString(webSocketMessage);
             for (var player : players) {
@@ -127,7 +144,7 @@ public class Room {
         }
         players.remove(player);
         broadcast("player_left", player.getId());
-        if (getPlayersCount() == 0){
+        if (getPlayersCount() == 0) {
             state = RoomState.CLOSED;
         }
         return true;

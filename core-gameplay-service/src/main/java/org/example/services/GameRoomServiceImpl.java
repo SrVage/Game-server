@@ -43,7 +43,7 @@ public class GameRoomServiceImpl implements GameRoomService {
             return false;
         }
         logger.info("Adding player to room " + roomId + " " + message);
-        var player = new Player(message, session);
+        var player = new Player(message, session, 5);
         room.addPlayer(player);
         if (room.getPlayersCount() == 2){
             room.startGame();
