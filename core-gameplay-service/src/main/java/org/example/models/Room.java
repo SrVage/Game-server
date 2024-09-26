@@ -3,11 +3,15 @@ package org.example.models;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
+import org.example.handlers.IEventHandler;
+import org.example.handlers.MoveEventHandler;
+import org.example.handlers.ShootEventHandler;
 import org.example.models.events.EventSender;
 import org.example.models.events.GameEvent;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -22,8 +26,8 @@ public class Room {
     private final List<Player> players;
     private final ObjectMapper jsonMapper;
     private final Logger logger = Logger.getLogger(Room.class.getName());
-
     private final BlockingQueue<EventSender> eventQueue = new LinkedBlockingQueue<>();
+    private final List<IEventHandler> eventHandlers = new ArrayList<>();
 
 
     public Room(String id, ObjectMapper jsonMapper) {
@@ -31,6 +35,8 @@ public class Room {
         players = new CopyOnWriteArrayList<>();
         state = RoomState.WAITING;
         this.jsonMapper = jsonMapper;
+        eventHandlers.add(new MoveEventHandler(this::handleEvent, this::handleEventOther, this::getPlayerBySession));
+        eventHandlers.add(new ShootEventHandler(this::handleEvent, this::handleEventOther, this::getPlayerBySession));
     }
 
     public void addPlayer(Player player) {
@@ -68,25 +74,9 @@ public class Room {
         EventSender event;
 
         while ((event = eventQueue.poll()) != null) {
-            if (event.getEvent().getCmd().equals("move")) {
-                processMoveEvent(event);
-            } else {
-                if (event.isAll()) {
-                    handleEvent(event.getEvent());
-                } else {
-                    handleEventOther(event.getEvent(), event.getSession());
-                }
+            for(var handler : eventHandlers) {
+                handler.handle(event);
             }
-        }
-    }
-
-    private void processMoveEvent(EventSender event) {
-        var player = getPlayerBySession(event.getSession());
-        if (player.updatePosition(event.getEvent().getPositionX(), event.getEvent().getPositionY(), event.getEvent().getRotateAngle())) {
-            handleEventOther(event.getEvent(), event.getSession());
-        } else {
-            var newEvent = new GameEvent(player.getId(), "move", player.getPositionX(), player.getPositionY(), player.getRotation());
-            handleEvent(newEvent);
         }
     }
 
