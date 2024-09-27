@@ -36,7 +36,7 @@ public class Room {
         state = RoomState.WAITING;
         this.jsonMapper = jsonMapper;
         eventHandlers.add(new MoveEventHandler(this::handleEvent, this::handleEventOther, this::getPlayerBySession));
-        eventHandlers.add(new ShootEventHandler(this::handleEvent, this::handleEventOther, this::getPlayerBySession));
+        eventHandlers.add(new ShootEventHandler(this::handleEvent, this::handleEventOther, this::getPlayerBySession, this::getOtherPlayer));
     }
 
     public void addPlayer(Player player) {
@@ -143,6 +143,13 @@ public class Room {
     private Player getPlayerBySession(WebSocketSession session) {
         return players.stream()
                 .filter(p -> p.getSession().equals(session))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private Player getOtherPlayer(Player player) {
+        return players.stream()
+                .filter(p -> !p.equals(player))
                 .findFirst()
                 .orElse(null);
     }

@@ -31,7 +31,12 @@ public class MoveEventHandler implements IEventHandler{
         if (player.updatePosition(event.getEvent().getPositionX(), event.getEvent().getPositionY(), event.getEvent().getRotateAngle())) {
             otherPlayerHandler.accept(event.getEvent(), event.getSession());
         } else {
-            var newEvent = new GameEvent(player.getId(), command, player.getPositionX(), player.getPositionY(), player.getRotation());
+            var newEvent = GameEvent.builder()
+                    .cmd(command)
+                    .playerId(player.getId())
+                    .positionX(player.getPositionX())
+                    .positionY(player.getPositionY())
+                    .rotateAngle(player.getRotation()).build();//new GameEvent(player.getId(), command, player.getPositionX(), player.getPositionY(), player.getRotation());
             allPlayerHandler.accept(newEvent);
         }
     }

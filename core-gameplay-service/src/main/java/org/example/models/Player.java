@@ -19,7 +19,7 @@ public class Player {
     private final WebSocketSession session;
     private Timestamp lastPositionUpdate = new Timestamp(System.currentTimeMillis());
     @Getter
-    private int hp;
+    private int hp = 100;
     private final float speed;
 
     public boolean updatePosition(float positionX, float positionY, float rotation) {
@@ -33,8 +33,9 @@ public class Player {
         return true;
     }
 
-    public void Damage(int damage) {
+    public boolean damage(int damage) {
         this.hp -= damage;
+        return this.hp <= 0;
     }
 
     private static float checkDistance(float x1, float y1, float x2, float y2) {
