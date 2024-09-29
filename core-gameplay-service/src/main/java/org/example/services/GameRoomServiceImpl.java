@@ -3,6 +3,7 @@ package org.example.services;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.example.factories.IFactory;
 import org.example.models.Player;
 import org.example.models.Room;
 import org.example.models.RoomState;
@@ -24,11 +25,13 @@ public class GameRoomServiceImpl implements GameRoomService {
     private final Map<String, Room> rooms = new ConcurrentHashMap<>();
     private final Logger logger = Logger.getLogger(GameRoomServiceImpl.class.getName());
     private final ObjectMapper jsonMapper;
+    private final IFactory<Player, WebSocketSession> playerFactory;
+    private final IFactory<Room, ObjectMapper> roomFactory;
 
     @Override
     public Room createRoom() {
         String uuid = UUID.randomUUID().toString();
-        Room room = new Room(uuid, jsonMapper);
+        Room room = roomFactory.create(uuid, jsonMapper);
 
         roomThreadPool.submit(() -> runRoom(room));
 
@@ -43,7 +46,7 @@ public class GameRoomServiceImpl implements GameRoomService {
             return false;
         }
         logger.info("Adding player to room " + roomId + " " + message);
-        var player = new Player(message, session, 5);
+        var player = playerFactory.create(message, session);
         room.addPlayer(player);
         if (room.getPlayersCount() == 2){
             room.startGame();

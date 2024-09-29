@@ -10,17 +10,27 @@ import java.sql.Timestamp;
 @Getter
 public class Player {
     private final String id;
-    @Getter
     private float positionX;
-    @Getter
     private float positionY;
-    @Getter
     private float rotation;
     private final WebSocketSession session;
     private Timestamp lastPositionUpdate = new Timestamp(System.currentTimeMillis());
-    @Getter
     private int hp = 100;
     private final float speed;
+    private final int damage;
+
+    public Player(String id, WebSocketSession session, float speed, int health, int damage) {
+        this.id = id;
+        this.session = session;
+        this.speed = speed;
+        this.hp = health;
+        this.damage = damage;
+    }
+
+    public void setStartPosition(float positionX, float positionY) {
+        this.positionX = positionX;
+        this.positionY = positionY;
+    }
 
     public boolean updatePosition(float positionX, float positionY, float rotation) {
         if (checkDistance(this.positionX, this.positionY, positionX, positionY) > speed * getTimeDifferenceInSeconds(new Timestamp(System.currentTimeMillis()), lastPositionUpdate)) {

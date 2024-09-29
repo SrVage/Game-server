@@ -6,6 +6,7 @@ import lombok.Getter;
 import org.example.handlers.IEventHandler;
 import org.example.handlers.MoveEventHandler;
 import org.example.handlers.ShootEventHandler;
+import org.example.handlers.StartGameHandler;
 import org.example.models.events.EventSender;
 import org.example.models.events.GameEvent;
 import org.springframework.web.socket.TextMessage;
@@ -28,20 +29,29 @@ public class Room {
     private final Logger logger = Logger.getLogger(Room.class.getName());
     private final BlockingQueue<EventSender> eventQueue = new LinkedBlockingQueue<>();
     private final List<IEventHandler> eventHandlers = new ArrayList<>();
+    private final float[] firstSpawnPoint;
+    private final float[] secondSpawnPoint;
+    private StartGameHandler startGameHandler;
 
 
-    public Room(String id, ObjectMapper jsonMapper) {
+    public Room(String id, ObjectMapper jsonMapper,
+                float[] firstSpawnPoint, float[] secondSpawnPoint) {
         this.id = id;
+        this.firstSpawnPoint = firstSpawnPoint;
+        this.secondSpawnPoint = secondSpawnPoint;
         players = new CopyOnWriteArrayList<>();
         state = RoomState.WAITING;
         this.jsonMapper = jsonMapper;
+        startGameHandler = new StartGameHandler(firstSpawnPoint, secondSpawnPoint, this::handleEvent, this::start);
         eventHandlers.add(new MoveEventHandler(this::handleEvent, this::handleEventOther, this::getPlayerBySession));
         eventHandlers.add(new ShootEventHandler(this::handleEvent, this::handleEventOther, this::getPlayerBySession, this::getOtherPlayer));
+        eventHandlers.add(startGameHandler);
     }
 
     public void addPlayer(Player player) {
         if (state == RoomState.WAITING) {
             players.add(player);
+            startGameHandler.addPlayer(player);
         }
     }
 
@@ -50,8 +60,12 @@ public class Room {
             return false;
         }
         state = RoomState.IN_PROGRESS;
-        broadcast("start_game", "Game started");
+        startGameHandler.spawnPlayers();
         return true;
+    }
+
+    private void start(){
+        broadcast("start_game", "Game started");
     }
 
     public void completeGame() {
