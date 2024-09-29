@@ -18,6 +18,7 @@ public class Player {
     private int hp = 100;
     private final float speed;
     private final int damage;
+    private boolean isDead = false;
 
     public Player(String id, WebSocketSession session, float speed, int health, int damage) {
         this.id = id;
@@ -33,6 +34,9 @@ public class Player {
     }
 
     public boolean updatePosition(float positionX, float positionY, float rotation) {
+        if (isDead){
+            return false;
+        }
         if (checkDistance(this.positionX, this.positionY, positionX, positionY) > speed * getTimeDifferenceInSeconds(new Timestamp(System.currentTimeMillis()), lastPositionUpdate)) {
             return false;
         }
@@ -44,7 +48,14 @@ public class Player {
     }
 
     public boolean damage(int damage) {
+        if (isDead){
+            return true;
+        }
+
         this.hp -= damage;
+        if (hp<=0){
+            isDead = true;
+        }
         return this.hp <= 0;
     }
 

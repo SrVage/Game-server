@@ -1,6 +1,7 @@
 package org.example.handlers;
 
 import org.example.models.Player;
+import org.example.models.Vector;
 import org.example.models.events.EventSender;
 import org.example.models.events.GameEvent;
 import org.springframework.web.socket.WebSocketSession;
@@ -18,16 +19,18 @@ public class ShootEventHandler implements IEventHandler{
     private final BiConsumer<GameEvent, WebSocketSession> otherPlayerHandler;
     private final Function<WebSocketSession, Player> getPlayerBySession;
     private final Function<Player, Player> getOtherPlayer;
+    private final Consumer<Player> endGame;
     private final String command = "shoot";
 
     public ShootEventHandler(Consumer<GameEvent> allPlayerHandler,
                              BiConsumer<GameEvent, WebSocketSession> otherPlayerHandler,
                              Function<WebSocketSession, Player> getPlayerBySession,
-                             Function<Player, Player> getOtherPlayer) {
+                             Function<Player, Player> getOtherPlayer, Consumer<Player> endGame) {
         this.allPlayerHandler = allPlayerHandler;
         this.otherPlayerHandler = otherPlayerHandler;
         this.getPlayerBySession = getPlayerBySession;
         this.getOtherPlayer = getOtherPlayer;
+        this.endGame = endGame;
     }
 
     @Override
@@ -52,20 +55,21 @@ public class ShootEventHandler implements IEventHandler{
     }
 
     private void checkDamage(Player player, Player secondPlayer) {
-        float[] vectorBetween = createVector(new float[]{secondPlayer.getPositionX(), secondPlayer.getPositionY()}, new float[]{player.getPositionX(), player.getPositionY()});
-        float[] vectorBetweenNormalize = normalizeVector(vectorBetween);
-        float dotProduct = dotProduct(vectorBetweenNormalize, createUnitVector(player.getRotation()));
-        float distance = calculateDistance(vectorBetween);
+        float[] vectorBetween = Vector.createVector(new float[]{secondPlayer.getPositionX(), secondPlayer.getPositionY()}, new float[]{player.getPositionX(), player.getPositionY()});
+        float[] vectorBetweenNormalize = Vector.normalizeVector(vectorBetween);
+        float dotProduct = Vector.dotProduct(vectorBetweenNormalize, Vector.createUnitVector(player.getRotation()));
+        float distance = Vector.calculateDistance(vectorBetween);
 
         float distanceFactor = Math.min(Math.max((distance - minDistance) / (maxDistance - minDistance), 0.0f), 1.0f);
         float adjustedDotProductThreshold = minDotProductThreshold + distanceFactor * (maxDotProductThreshold - minDotProductThreshold);
 
         if (dotProduct >= adjustedDotProductThreshold) {
-            if (secondPlayer.damage(10)) {
+            if (secondPlayer.damage(player.getDamage())) {
                 var newEvent = GameEvent.builder().cmd("death")
                         .playerId(secondPlayer.getId())
                         .build();
                 allPlayerHandler.accept(newEvent);
+                endGame.accept(player);
             }
             else{
                 var newEvent = GameEvent.builder().cmd("damage")
@@ -75,50 +79,5 @@ public class ShootEventHandler implements IEventHandler{
                 allPlayerHandler.accept(newEvent);
             }
         }
-    }
-
-    public static float[] createVector(float[] pointA, float[] pointB) {
-        float[] vector = new float[pointA.length];
-        for (int i = 0; i < pointA.length; i++) {
-            vector[i] = pointB[i] - pointA[i];
-        }
-        return vector;
-    }
-
-    public static float[] createUnitVector(float angleDegrees) {
-        float angleRadians = (float) Math.toRadians(angleDegrees-90);
-        float x = (float) Math.cos(angleRadians);
-        float y = (float) Math.sin(angleRadians);
-        return new float[]{x, y};
-    }
-
-    public static float dotProduct(float[] vectorA, float[] vectorB) {
-        float result = 0.0f;
-        for (int i = 0; i < vectorA.length; i++) {
-            result += vectorA[i] * vectorB[i];
-        }
-        return result;
-    }
-
-    public static float[] normalizeVector(float[] vector) {
-        float magnitude = 0.0f;
-        for (float v : vector) {
-            magnitude += v * v;
-        }
-        magnitude = (float) Math.sqrt(magnitude);
-
-        float[] normalizedVector = new float[vector.length];
-        for (int i = 0; i < vector.length; i++) {
-            normalizedVector[i] = vector[i] / magnitude;
-        }
-        return normalizedVector;
-    }
-
-    private static float calculateDistance(float[] vector) {
-        float sum = 0.0f;
-        for (float v : vector) {
-            sum += v * v;
-        }
-        return (float) Math.sqrt(sum);
     }
 }

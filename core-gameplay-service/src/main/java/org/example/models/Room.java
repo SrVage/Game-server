@@ -29,22 +29,19 @@ public class Room {
     private final Logger logger = Logger.getLogger(Room.class.getName());
     private final BlockingQueue<EventSender> eventQueue = new LinkedBlockingQueue<>();
     private final List<IEventHandler> eventHandlers = new ArrayList<>();
-    private final float[] firstSpawnPoint;
-    private final float[] secondSpawnPoint;
     private StartGameHandler startGameHandler;
 
 
     public Room(String id, ObjectMapper jsonMapper,
                 float[] firstSpawnPoint, float[] secondSpawnPoint) {
         this.id = id;
-        this.firstSpawnPoint = firstSpawnPoint;
-        this.secondSpawnPoint = secondSpawnPoint;
         players = new CopyOnWriteArrayList<>();
         state = RoomState.WAITING;
         this.jsonMapper = jsonMapper;
         startGameHandler = new StartGameHandler(firstSpawnPoint, secondSpawnPoint, this::handleEvent, this::start);
         eventHandlers.add(new MoveEventHandler(this::handleEvent, this::handleEventOther, this::getPlayerBySession));
-        eventHandlers.add(new ShootEventHandler(this::handleEvent, this::handleEventOther, this::getPlayerBySession, this::getOtherPlayer));
+        eventHandlers.add(new ShootEventHandler(this::handleEvent, this::handleEventOther,
+                this::getPlayerBySession, this::getOtherPlayer, this :: endGame));
         eventHandlers.add(startGameHandler);
     }
 
@@ -69,6 +66,7 @@ public class Room {
     }
 
     public void completeGame() {
+
         state = RoomState.CLOSED;
     }
 
@@ -112,6 +110,11 @@ public class Room {
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private void endGame(Player player){
+        handleEvent(GameEvent.builder().cmd("game_over").playerId(player.getId()).build());
+        state = RoomState.CLOSED;
     }
 
     private void broadcast(String command, String message, WebSocketSession session) {
