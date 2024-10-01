@@ -29,7 +29,7 @@ public class Room {
     private final Logger logger = Logger.getLogger(Room.class.getName());
     private final BlockingQueue<EventSender> eventQueue = new LinkedBlockingQueue<>();
     private final List<IEventHandler> eventHandlers = new ArrayList<>();
-    private StartGameHandler startGameHandler;
+    private final StartGameHandler startGameHandler;
 
 
     public Room(String id, ObjectMapper jsonMapper,
@@ -40,8 +40,7 @@ public class Room {
         this.jsonMapper = jsonMapper;
         startGameHandler = new StartGameHandler(firstSpawnPoint, secondSpawnPoint, this::handleEvent, this::start);
         eventHandlers.add(new MoveEventHandler(this::handleEvent, this::handleEventOther, this::getPlayerBySession));
-        eventHandlers.add(new ShootEventHandler(this::handleEvent, this::handleEventOther,
-                this::getPlayerBySession, this::getOtherPlayer, this :: endGame));
+        eventHandlers.add(new ShootEventHandler(this::handleEvent, this::getPlayerBySession, this::getOtherPlayer, this :: endGame));
         eventHandlers.add(startGameHandler);
     }
 
@@ -52,22 +51,16 @@ public class Room {
         }
     }
 
-    public boolean startGame() {
+    public void startGame() {
         if (players.size() < 2) {
-            return false;
+            return;
         }
         state = RoomState.IN_PROGRESS;
         startGameHandler.spawnPlayers();
-        return true;
     }
 
     private void start(){
         broadcast("start_game", "Game started");
-    }
-
-    public void completeGame() {
-
-        state = RoomState.CLOSED;
     }
 
     public void addEvent(GameEvent event, WebSocketSession session) {

@@ -16,7 +16,6 @@ import java.util.logging.Logger;
 public class GameWebSocketHandler  extends TextWebSocketHandler {
     private final WebSocketMessageHandler webSocketMessageHandler;
     private static final Set<WebSocketSession> sessions = Collections.synchronizedSet(new HashSet<>());
-    private static final Map<String, WebSocketSession> rooms = Collections.synchronizedMap(new HashMap<>());
     private final Logger logger = Logger.getLogger(GameWebSocketHandler.class.getName());
 
     @Override
@@ -25,24 +24,12 @@ public class GameWebSocketHandler  extends TextWebSocketHandler {
     }
 
     @Override
-    protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
+    protected void handleTextMessage(WebSocketSession session, TextMessage message){
         webSocketMessageHandler.handleMessage(session, message.getPayload());
     }
 
     @Override
-    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
+    public void afterConnectionClosed(WebSocketSession session, CloseStatus status){
         webSocketMessageHandler.playerLeft(session);
-    }
-
-    private void broadcast(String message) {
-        synchronized (sessions) {
-            for (WebSocketSession session : sessions) {
-                try {
-                    session.sendMessage(new TextMessage(message));
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        }
     }
 }

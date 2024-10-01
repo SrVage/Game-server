@@ -16,18 +16,15 @@ public class ShootEventHandler implements IEventHandler{
     private static final float minDotProductThreshold = 0.5f;
     private static final float maxDotProductThreshold = 0.98f;
     private final Consumer<GameEvent> allPlayerHandler;
-    private final BiConsumer<GameEvent, WebSocketSession> otherPlayerHandler;
     private final Function<WebSocketSession, Player> getPlayerBySession;
     private final Function<Player, Player> getOtherPlayer;
     private final Consumer<Player> endGame;
     private final String command = "shoot";
 
     public ShootEventHandler(Consumer<GameEvent> allPlayerHandler,
-                             BiConsumer<GameEvent, WebSocketSession> otherPlayerHandler,
                              Function<WebSocketSession, Player> getPlayerBySession,
                              Function<Player, Player> getOtherPlayer, Consumer<Player> endGame) {
         this.allPlayerHandler = allPlayerHandler;
-        this.otherPlayerHandler = otherPlayerHandler;
         this.getPlayerBySession = getPlayerBySession;
         this.getOtherPlayer = getOtherPlayer;
         this.endGame = endGame;

@@ -9,14 +9,15 @@ import java.util.function.Consumer;
 
 public class StartGameHandler implements IEventHandler{
 
+    public static final int WAIT_TIME = 5000;
     private final float[] firstSpawnPoint;
     private final float[] secondSpawnPoint;
     private Player firstPlayer;
     private Player secondPlayer;
     private final Consumer<GameEvent> allPlayerHandler;
     private final Runnable start;
-    private volatile ConcurrentHashMap<String, Player> players = new ConcurrentHashMap<>();
-    private volatile ConcurrentHashMap<String, GameEvent> playerEvent = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, Player> players = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, GameEvent> playerEvent = new ConcurrentHashMap<>();
     private final String command = "ready";
 
     public StartGameHandler(float[] firstSpawnPoint, float[] secondSpawnPoint,
@@ -64,7 +65,7 @@ public class StartGameHandler implements IEventHandler{
                     for (var player : players.entrySet()){
                         allPlayerHandler.accept(playerEvent.get(player.getKey()));
                     }
-                    Thread.sleep(5000);
+                    Thread.sleep(WAIT_TIME);
                 }
             } catch (InterruptedException e) {
                 e.printStackTrace();
@@ -80,7 +81,6 @@ public class StartGameHandler implements IEventHandler{
         players.remove(event.getEvent().getPlayerId());
         if (players.isEmpty()){
             start.run();
-            //allPlayerHandler.accept(GameEvent.builder().cmd("start_game").build());
         }
     }
 }
